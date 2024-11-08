@@ -1,7 +1,7 @@
 'use client';
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 
 interface CustomerDetails {
   id: number;
@@ -48,6 +48,34 @@ export default function CustomerModal({ customer, isOpen, onClose }: CustomerMod
     }
     return phone;
   };
+
+  // Função para obter produtos únicos e suas quantidades
+  const getProductsSummary = () => {
+    const productMap = new Map<string, { quantity: number; total: number }>();
+    
+    customer.transactions.forEach(transaction => {
+      transaction.items?.forEach(item => {
+        if (!productMap.has(item.title)) {
+          productMap.set(item.title, { quantity: 0, total: 0 });
+        }
+        const current = productMap.get(item.title)!;
+        productMap.set(item.title, {
+          quantity: current.quantity + item.quantity,
+          total: current.total + (item.unit_price * item.quantity)
+        });
+      });
+    });
+
+    return Array.from(productMap.entries())
+      .map(([title, data]) => ({
+        title,
+        quantity: data.quantity,
+        total: data.total
+      }))
+      .sort((a, b) => b.quantity - a.quantity);
+  };
+
+  const productsSummary = getProductsSummary();
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -214,6 +242,61 @@ export default function CustomerModal({ customer, isOpen, onClose }: CustomerMod
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+
+                    {/* Nova seção de Produtos */}
+                    <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                      <h4 className="text-lg font-medium text-white mb-3 flex items-center gap-2">
+                        <ShoppingBagIcon className="h-5 w-5 text-indigo-400" />
+                        Produtos Comprados
+                      </h4>
+                      <div className="space-y-4">
+                        {/* Tags de produtos */}
+                        <div className="flex flex-wrap gap-2">
+                          {productsSummary.map((product, index) => (
+                            <div
+                              key={index}
+                              className="inline-flex items-center bg-gray-800 rounded-full px-3 py-1"
+                            >
+                              <span className="text-sm text-white">{product.title}</span>
+                              <span className="ml-2 text-xs text-gray-400 bg-gray-700 rounded-full px-2 py-0.5">
+                                {product.quantity}x
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Top 5 produtos mais comprados */}
+                        <div className="mt-4">
+                          <h5 className="text-sm font-medium text-gray-400 mb-2">
+                            Top 5 Produtos Mais Comprados
+                          </h5>
+                          <div className="space-y-2">
+                            {productsSummary.slice(0, 5).map((product, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-gray-800 rounded-lg p-2"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-indigo-400 font-medium">#{index + 1}</span>
+                                  <span className="text-sm text-white">{product.title}</span>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm text-white">
+                                    {product.quantity} unidades
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    {(product.total / 100).toLocaleString('pt-BR', {
+                                      style: 'currency',
+                                      currency: 'BRL'
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

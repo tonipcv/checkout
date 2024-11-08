@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { api } from '@/services/pagarmeApi';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Search, Users, ArrowLeft, CreditCard, Wallet, Receipt, RefreshCcw, Package } from 'lucide-react';
 import CustomerModal from '@/components/CustomerModal';
+import Link from 'next/link';
 
 interface Transaction {
   id: number;
@@ -45,10 +46,29 @@ export default function CustomersPage() {
   const [selectedStatus, setSelectedStatus] = useState<keyof CustomersByStatus>('paid');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<string>('');
+  const [uniqueProducts, setUniqueProducts] = useState<string[]>([]);
 
   useEffect(() => {
     loadCustomers();
   }, []);
+
+  // Função para extrair produtos únicos
+  const extractUniqueProducts = (customersByStatus: CustomersByStatus) => {
+    const productsSet = new Set<string>();
+    
+    Object.values(customersByStatus).forEach(customerList => {
+      customerList.forEach(customer => {
+        customer.transactions.forEach(transaction => {
+          transaction.items?.forEach(item => {
+            productsSet.add(item.title);
+          });
+        });
+      });
+    });
+
+    return Array.from(productsSet).sort();
+  };
 
   async function loadCustomers() {
     try {
@@ -103,6 +123,7 @@ export default function CustomersPage() {
       });
 
       setCustomers(customersByStatus);
+      setUniqueProducts(extractUniqueProducts(customersByStatus));
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
     } finally {
@@ -110,25 +131,45 @@ export default function CustomersPage() {
     }
   }
 
-  const filteredCustomers = customers[selectedStatus].filter(customer => 
-    search === '' || 
-    customer.name.toLowerCase().includes(search.toLowerCase()) ||
-    customer.email.toLowerCase().includes(search.toLowerCase()) ||
-    customer.document_number?.includes(search)
-  );
+  const filteredCustomers = customers[selectedStatus].filter(customer => {
+    // Filtro de busca existente
+    const matchesSearch = search === '' || 
+      customer.name.toLowerCase().includes(search.toLowerCase()) ||
+      customer.email.toLowerCase().includes(search.toLowerCase()) ||
+      customer.document_number?.includes(search);
+
+    // Filtro de produto
+    const matchesProduct = selectedProduct === '' || 
+      customer.transactions.some(transaction =>
+        transaction.items?.some(item =>
+          item.title === selectedProduct
+        )
+      );
+
+    return matchesSearch && matchesProduct;
+  });
 
   const statusLabels = {
-    paid: 'Compras Aprovadas',
-    waiting_payment: 'Aguardando Pagamento',
-    refused: 'Compras Recusadas',
-    refunded: 'Compras Reembolsadas'
-  };
-
-  const statusColors = {
-    paid: 'bg-green-500',
-    waiting_payment: 'bg-yellow-500',
-    refused: 'bg-red-500',
-    refunded: 'bg-purple-500'
+    paid: { 
+      label: 'Compras Aprovadas', 
+      Icon: CreditCard, 
+      color: 'text-green-400' 
+    },
+    waiting_payment: { 
+      label: 'Aguardando Pagamento', 
+      Icon: Wallet, 
+      color: 'text-yellow-400' 
+    },
+    refused: { 
+      label: 'Compras Recusadas', 
+      Icon: Receipt, 
+      color: 'text-red-400' 
+    },
+    refunded: { 
+      label: 'Compras Reembolsadas', 
+      Icon: RefreshCcw, 
+      color: 'text-purple-400' 
+    }
   };
 
   if (loading) {
@@ -145,50 +186,114 @@ export default function CustomersPage() {
         <div className="w-full">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white">Clientes por Status</h1>
-            
-            {/* Filtros */}
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Link 
+                  href="/"
+                  className="mr-4 p-2 rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  <ArrowLeft className="h-6 w-6 text-gray-400" />
+                </Link>
+                <div>
+                  <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                    <Users className="h-8 w-8 text-indigo-500" />
+                    Clientes
+                  </h1>
+                  <p className="mt-1 text-gray-400">
+                    Visualize e gerencie todos os clientes por status de compra
+                  </p>
                 </div>
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar por nome, email ou documento..."
-                  className="bg-gray-800 block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-md text-gray-300 placeholder-gray-400"
-                />
+              </div>
+            </div>
+
+            {/* Filtros */}
+            <div className="mt-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* Campo de busca */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar por nome, email ou documento..."
+                    className="bg-gray-800 block w-full pl-10 pr-3 py-3 border border-gray-700 rounded-lg text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+
+                {/* Filtro de produtos */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Package className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <select
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value)}
+                    className="bg-gray-800 block w-full pl-10 pr-3 py-3 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
+                  >
+                    <option value="">Todos os Produtos</option>
+                    {uniqueProducts.map((product) => (
+                      <option key={product} value={product}>
+                        {product}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value as keyof CustomersByStatus)}
-                className="bg-gray-800 block w-full pl-3 pr-10 py-2 border border-gray-700 rounded-md text-gray-300"
-              >
-                {Object.entries(statusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {Object.entries(statusLabels).map(([value, { label, Icon, color }]) => (
+                  <button
+                    key={value}
+                    onClick={() => setSelectedStatus(value as keyof CustomersByStatus)}
+                    className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                      selectedStatus === value
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 mr-2 ${selectedStatus === value ? 'text-white' : color}`} />
+                    {label}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
           </div>
 
           {/* Lista de Clientes */}
-          <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+          <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 mt-6">
             <div className="p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">
-                {statusLabels[selectedStatus]} ({filteredCustomers.length})
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    {(() => {
+                      const StatusIcon = statusLabels[selectedStatus].Icon;
+                      return <StatusIcon className={`h-5 w-5 ${statusLabels[selectedStatus].color}`} />;
+                    })()}
+                    {statusLabels[selectedStatus].label}
+                    <span className="ml-2 text-sm text-gray-400">
+                      ({filteredCustomers.length} clientes)
+                    </span>
+                  </h2>
+                  {selectedProduct && (
+                    <span className="inline-flex items-center bg-indigo-600/10 text-indigo-400 px-3 py-1 rounded-full text-sm">
+                      <Package className="h-4 w-4 mr-2" />
+                      {selectedProduct}
+                    </span>
+                  )}
+                </div>
+              </div>
 
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-700">
                   <thead>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Cliente</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Total de Compras</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Valor Total</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Última Compra</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Cliente</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Total de Compras</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Valor Total</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Última Compra</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-700">
@@ -202,11 +307,11 @@ export default function CustomersPage() {
                       return (
                         <tr 
                           key={customer.id} 
-                          className="hover:bg-gray-700 cursor-pointer"
                           onClick={() => {
                             setSelectedCustomer(customer);
                             setIsModalOpen(true);
                           }}
+                          className="hover:bg-gray-700 cursor-pointer transition-colors"
                         >
                           <td className="px-6 py-4">
                             <div className="text-sm font-medium text-white">{customer.name}</div>

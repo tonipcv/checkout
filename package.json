@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.1.5",
     "@hookform/resolvers": "^3.9.1",
     "axios": "^1.7.7",
+    "lucide-react": "^0.456.0",
     "next": "15.0.2",
     "pagarme": "^4.35.2",
     "react": "19.0.0-rc-02c0e824-20241028",
