@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/services/pagarmeApi';
 import { debounce } from 'lodash';
 
@@ -60,15 +60,41 @@ export default function RecentTransactions() {
     endDate: ''
   });
 
-  useEffect(() => {
-    loadTransactions();
-  }, []);
+  const loadTransactions = useCallback(async () => {
+    if (!hasMore) return;
 
-  useEffect(() => {
-    applyFilters();
-  }, [transactions, filters]);
+    try {
+      setLoading(true);
+      const response = await api.get('/transactions', {
+        params: {
+          api_key: process.env.NEXT_PUBLIC_PAGARME_API_KEY,
+          count: 100,
+          page: currentPage
+        }
+      });
 
-  const applyFilters = () => {
+      const newTransactions = response.data;
+      
+      if (newTransactions.length < 100) {
+        setHasMore(false);
+      }
+
+      const sortedTransactions = [...transactions, ...newTransactions].sort((a, b) => 
+        new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+      );
+
+      setTransactions(sortedTransactions);
+      setCurrentPage(prev => prev + 1);
+    } catch (err) {
+      console.error('Erro ao carregar transações:', err);
+      setError('Erro ao carregar transações');
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, hasMore, transactions]);
+
+  const applyFilters = useCallback(() => {
     let filtered = [...transactions];
 
     // Filtro de busca
@@ -105,7 +131,15 @@ export default function RecentTransactions() {
     }
 
     setFilteredTransactions(filtered);
-  };
+  }, [transactions, filters]);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleFilterChange = (name: keyof Filters, value: string) => {
     setFilters(prev => ({
@@ -117,40 +151,6 @@ export default function RecentTransactions() {
   const debouncedSearch = debounce((value: string) => {
     handleFilterChange('search', value);
   }, 300);
-
-  async function loadTransactions() {
-    if (!hasMore) return;
-
-    try {
-      setLoading(true);
-      const response = await api.get('/transactions', {
-        params: {
-          api_key: process.env.NEXT_PUBLIC_PAGARME_API_KEY,
-          count: 100,
-          page: currentPage
-        }
-      });
-
-      const newTransactions = response.data;
-      
-      if (newTransactions.length < 100) {
-        setHasMore(false);
-      }
-
-      const sortedTransactions = [...transactions, ...newTransactions].sort((a, b) => 
-        new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-      );
-
-      setTransactions(sortedTransactions);
-      setCurrentPage(prev => prev + 1);
-    } catch (err) {
-      console.error('Erro ao carregar transações:', err);
-      setError('Erro ao carregar transações');
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const loadMore = () => {
     if (!loading && hasMore) {

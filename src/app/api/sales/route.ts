@@ -109,7 +109,7 @@ async function getTotalSales() {
       } : null,
       // Valores
       amount: order.amount / 100,
-      currency: order.currency,cr
+      currency: order.currency,
       // Status
       status: order.status,
       closed: order.closed,

@@ -166,4 +166,23 @@ export async function testConnection(): Promise<boolean> {
   }
 }
 
+export async function getCategorySales(): Promise<{
+  name: string;
+  total: number;
+  percentage: number;
+  items: string[];
+  growth: string;
+}[]> {
+  try {
+    const response = await fetch('/api/sales');
+    if (!response.ok) {
+      throw new Error('Failed to fetch category sales');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching category sales:', error);
+    return [];
+  }
+}
+
 export { api };

@@ -2,9 +2,24 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/services/pagarmeApi';
 
+interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  document_number: string;
+  // Add other customer fields as needed
+}
+
+interface Order {
+  id: string;
+  code: string;
+  amount: number;
+  // Add other order fields as needed
+}
+
 export default function ApiTestPage() {
-  const [customers, setCustomers] = useState<any>(null);
-  const [orders, setOrders] = useState<any>(null);
+  const [customers, setCustomers] = useState<Customer[] | null>(null);
+  const [orders, setOrders] = useState<Order[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

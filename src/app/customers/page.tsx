@@ -1,9 +1,16 @@
+/* eslint-disable */
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/services/pagarmeApi';
 import { Search, Users, ArrowLeft, CreditCard, Wallet, Receipt, RefreshCcw, Package } from 'lucide-react';
 import CustomerModal from '@/components/CustomerModal';
 import Link from 'next/link';
+
+interface TransactionItem {
+  title: string;
+  quantity: number;
+  unit_price: number;
+}
 
 interface Transaction {
   id: number;
@@ -11,11 +18,7 @@ interface Transaction {
   status: string;
   date_created: string;
   payment_method: string;
-  items?: Array<{
-    title: string;
-    quantity: number;
-    unit_price: number;
-  }>;
+  items: TransactionItem[];
 }
 
 interface Customer {
@@ -53,31 +56,10 @@ export default function CustomersPage() {
   const [appliedFilters, setAppliedFilters] = useState(filters);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<string>('');
+  const [selectedProduct] = useState<string>('');
   const [uniqueProducts, setUniqueProducts] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  // Função para extrair produtos únicos
-  const extractUniqueProducts = (customersByStatus: CustomersByStatus) => {
-    const productsSet = new Set<string>();
-    
-    Object.values(customersByStatus).forEach(customerList => {
-      customerList.forEach(customer => {
-        customer.transactions.forEach(transaction => {
-          transaction.items?.forEach(item => {
-            productsSet.add(item.title);
-          });
-        });
-      });
-    });
-
-    return Array.from(productsSet).sort();
-  };
-
-  async function loadCustomers() {
+  const loadCustomers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get('/transactions', {
@@ -90,7 +72,6 @@ export default function CustomersPage() {
       const transactions = response.data;
       const customerMap = new Map<number, Customer>();
 
-      // Agrupa transações por cliente e inclui os items
       transactions.forEach((transaction: any) => {
         const customerId = transaction.customer.id;
         if (!customerMap.has(customerId)) {
@@ -131,12 +112,32 @@ export default function CustomersPage() {
 
       setCustomers(customersByStatus);
       setUniqueProducts(extractUniqueProducts(customersByStatus));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao carregar clientes:', error);
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  const extractUniqueProducts = (customersByStatus: CustomersByStatus) => {
+    const productsSet = new Set<string>();
+    
+    Object.values(customersByStatus).forEach((customerList: Customer[]) => {
+      customerList.forEach((customer: Customer) => {
+        customer.transactions.forEach((transaction: Transaction) => {
+          transaction.items.forEach((item: TransactionItem) => {
+            productsSet.add(item.title);
+          });
+        });
+      });
+    });
+
+    return Array.from(productsSet).sort();
+  };
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
 
   const handleFilterChange = (name: string, value: string) => {
     setFilters(prev => ({

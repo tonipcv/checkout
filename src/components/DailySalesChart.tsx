@@ -3,14 +3,24 @@ import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '@/services/pagarmeApi';
 
-interface SalesData {
+interface Transaction {
+  created_at: string;
+  amount: number;
+}
+
+interface ChartData {
   date: string;
   vendas: number;
   pedidos: number;
 }
 
+interface SalesByDate {
+  vendas: number;
+  pedidos: number;
+}
+
 export default function DailySalesChart() {
-  const [data, setData] = useState<SalesData[]>([]);
+  const [data, setData] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +39,7 @@ export default function DailySalesChart() {
           }
         });
 
-        const salesByDate = response.data.data.reduce((acc: any, order: any) => {
+        const salesByDate = response.data.data.reduce((acc: Record<string, SalesByDate>, order: Transaction) => {
           const date = new Date(order.created_at).toLocaleDateString('pt-BR');
           if (!acc[date]) {
             acc[date] = { vendas: 0, pedidos: 0 };
@@ -39,7 +49,7 @@ export default function DailySalesChart() {
           return acc;
         }, {});
 
-        const chartData = Object.entries(salesByDate).map(([date, data]: [string, any]) => ({
+        const chartData = Object.entries(salesByDate as Record<string, SalesByDate>).map(([date, data]) => ({
           date,
           vendas: data.vendas,
           pedidos: data.pedidos
