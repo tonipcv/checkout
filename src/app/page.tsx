@@ -2,6 +2,7 @@ import RecentTransactions from "@/components/RecentTransactions";
 import { api } from "@/services/pagarmeApi";
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { Users } from 'lucide-react';
 
 async function getTransactionsSummary() {
   try {
@@ -59,68 +60,81 @@ export default async function Home() {
               <div className="mt-4 flex md:mt-0 md:ml-4">
                 <Link
                   href="/customers"
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                 >
+                  <Users className="h-5 w-5 mr-2" />
                   Ver Clientes
                 </Link>
               </div>
             </div>
             
             {/* Barra de Filtros */}
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {/* Busca */}
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+            <div className="mt-6 bg-gray-800 p-4 rounded-lg border border-gray-700">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-6">
+                {/* Busca */}
+                <div className="relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                  </div>
+                  <input
+                    type="text"
+                    name="search"
+                    id="search"
+                    className="bg-gray-700 block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-lg text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Buscar por ID, cliente, email..."
+                  />
                 </div>
-                <input
-                  type="text"
-                  name="search"
-                  id="search"
-                  className="bg-gray-800 block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-md leading-5 text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Buscar por ID, cliente, email..."
-                />
-              </div>
 
-              {/* Filtro de Status */}
-              <div>
-                <select
-                  className="bg-gray-800 block w-full pl-3 pr-10 py-2 text-base border border-gray-700 rounded-md text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="">Status</option>
-                  <option value="paid">Pago</option>
-                  <option value="refused">Recusado</option>
-                  <option value="waiting_payment">Aguardando Pagamento</option>
-                  <option value="refunded">Reembolsado</option>
-                </select>
-              </div>
+                {/* Filtro de Status */}
+                <div>
+                  <select
+                    className="bg-gray-700 block w-full pl-3 pr-10 py-2 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">Status</option>
+                    <option value="paid">Pago</option>
+                    <option value="refused">Recusado</option>
+                    <option value="waiting_payment">Aguardando Pagamento</option>
+                    <option value="refunded">Reembolsado</option>
+                  </select>
+                </div>
 
-              {/* Filtro de Método de Pagamento */}
-              <div>
-                <select
-                  className="bg-gray-800 block w-full pl-3 pr-10 py-2 text-base border border-gray-700 rounded-md text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="">Método de Pagamento</option>
-                  <option value="credit_card">Cartão de Crédito</option>
-                  <option value="boleto">Boleto</option>
-                  <option value="pix">PIX</option>
-                </select>
-              </div>
+                {/* Filtro de Método de Pagamento */}
+                <div>
+                  <select
+                    className="bg-gray-700 block w-full pl-3 pr-10 py-2 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">Método de Pagamento</option>
+                    <option value="credit_card">Cartão de Crédito</option>
+                    <option value="boleto">Boleto</option>
+                    <option value="pix">PIX</option>
+                  </select>
+                </div>
 
-              {/* Data Inicial */}
-              <div>
-                <input
-                  type="date"
-                  className="bg-gray-800 block w-full pl-3 pr-10 py-2 text-base border border-gray-700 rounded-md text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
+                {/* Data Inicial */}
+                <div>
+                  <input
+                    type="date"
+                    className="bg-gray-700 block w-full pl-3 pr-3 py-2 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
 
-              {/* Data Final */}
-              <div>
-                <input
-                  type="date"
-                  className="bg-gray-800 block w-full pl-3 pr-10 py-2 text-base border border-gray-700 rounded-md text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                />
+                {/* Data Final */}
+                <div>
+                  <input
+                    type="date"
+                    className="bg-gray-700 block w-full pl-3 pr-3 py-2 border border-gray-600 rounded-lg text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+
+                {/* Botão de Aplicar Filtros */}
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    Aplicar Filtros
+                  </button>
+                </div>
               </div>
             </div>
           </div>
